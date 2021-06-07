@@ -1,3 +1,4 @@
+// @ts-nocheck
 /*!
  * GridStack 4.2.5
  * https://gridstackjs.com/
