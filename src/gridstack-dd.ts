@@ -89,7 +89,7 @@ GridStack.prototype._setupAcceptWidget = function(this: GridStack): GridStack {
   let onDrag = (event: DragEvent, el: GridItemHTMLElement, helper: GridItemHTMLElement) => {
     let node = el.gridstackNode;
     if (!node) return;
-
+    
     helper = helper || el;
     let rec = helper.getBoundingClientRect();
     let left = rec.left - gridPos.left;
@@ -246,6 +246,10 @@ GridStack.prototype._setupAcceptWidget = function(this: GridStack): GridStack {
       if (!node) return false;
 
       // use existing placeholder node as it's already in our list with drop location
+      // START OMP
+      /** store `_stack` value before cleanup */
+      const { _stack } = node;
+      // END OMP
       if (wasAdded) {
         this.engine.cleanupNode(node); // removes all internal _xyz values
         node.grid = this;
@@ -278,7 +282,7 @@ GridStack.prototype._setupAcceptWidget = function(this: GridStack): GridStack {
 
       this.engine.endUpdate();
       if (this._gsEventHandler['dropped']) {
-        this._gsEventHandler['dropped']({type: 'dropped'}, origNode && origNode.grid ? origNode : undefined, node);
+        this._gsEventHandler['dropped']({type: 'dropped'}, origNode && origNode.grid ? origNode : undefined, { ...node, _stack });
       }
 
       // wait till we return out of the drag callback to set the new drag&resize handler or they may get messed up
@@ -290,7 +294,7 @@ GridStack.prototype._setupAcceptWidget = function(this: GridStack): GridStack {
           this.engine.removeNode(node);
         }
       });
-
+      
       return false; // prevent parent from receiving msg (which may be grid as well)
     });
   return this;
@@ -481,6 +485,17 @@ GridStack.prototype._onStartMoving = function(this: GridStack, el: GridItemHTMLE
 
   if (event.type === 'dropover' && node._temporaryRemoved) {
     // TEST console.log('engine.addNode x=' + node.x);
+    // START OMP
+    /**
+   * Utils.isIntercepted() gives `isNan` output if `p[w|h]` values are not set due to undefined `node._orig`
+   * It also makes sure to reset placeholder height & width 
+   */   
+    node._orig = Utils.copyPos({}, node);
+    node._stack =
+      this.opts.stack && node._isExternal
+        ? this.engine.collide(node, node._orig)
+        : undefined;
+    // END OMP
     this.engine.addNode(node); // will add, fix collisions, update attr and clear _temporaryRemoved
     node._moving = true; // AFTER, mark as moving object (wanted fix location before)
   }
@@ -541,7 +556,11 @@ GridStack.prototype._dragOrResize = function(this: GridStack, el: GridItemHTMLEl
     mTop = this.opts.marginTop as number,
     mBottom = this.opts.marginBottom as number;
 
-  if (event.type === 'drag') {
+  // START OMP
+  // if (event.type === 'drag') {
+  const isDragging = event.type === 'drag'
+  if (isDragging) {
+    // END OMP
     if (node._temporaryRemoved) return; // handled by dropover
     let distance = ui.position.top - node._prevYPix;
     node._prevYPix = ui.position.top;
@@ -555,7 +574,18 @@ GridStack.prototype._dragOrResize = function(this: GridStack, el: GridItemHTMLEl
 
     // @ts-ignore// if we're at the bottom hitting something else, grow the grid so cursor doesn't leave when trying to place below others
     let prev = this._extraDragRow;
-    if (this.engine.collide(node, p)) {
+    // START OMP
+    /**
+     * for now, storing only 1 collision
+     */
+    // if (this.engine.collide(node, p)) {
+    const collidedNode = this.engine.collide(node, p);
+    if (this.opts.stack && node._isExternal) {
+      node._stack = collidedNode;
+    }
+    // this.opts.collide && (node._collide=collidedNode);
+    if (collidedNode) {
+    // END OMP
       let row = this.getRow();
       let extra = Math.max(0, (p.y + node.h) - row);
       if (this.opts.maxRow && row + extra > this.opts.maxRow) {
@@ -603,8 +633,21 @@ GridStack.prototype._dragOrResize = function(this: GridStack, el: GridItemHTMLEl
     this._extraDragRow = 0;// @ts-ignore
     this._updateContainerHeight();
 
+    // START OMP
+    /**
+     * make sure we don't touch external element's attribute
+     * as it may cause unexpected node properties later
+     */
+    // let target = event.target as GridItemHTMLElement;// @ts-ignore
+    // this._writePosAttr(target, node);
+    const isNodeExternalAndDragging = node._isExternal && isDragging;
     let target = event.target as GridItemHTMLElement;// @ts-ignore
-    this._writePosAttr(target, node);
+    // take the clone for external, otherwise keep as is and no need to set attrs
+    if (isNodeExternalAndDragging) {
+      target = el;
+      this._writePosAttr(target, node);
+    }
+    // END OMP
     if (this._gsEventHandler[event.type]) {
       this._gsEventHandler[event.type](event, target);
     }

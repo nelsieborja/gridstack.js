@@ -472,7 +472,16 @@ export class GridStackEngine {
     this.nodes.push(node);
     triggerAddEvent && this.addedNodes.push(node);
 
-    this._fixCollisions(node);
+    // START OMP
+    /** don't fix any collision for enabled (+with collision) `stack` */
+    // this._fixCollisions(node);
+    if (node._stack) {
+      node._dirty = true;
+      Utils.copyPos(node, node._stack);
+    } else {
+      this._fixCollisions(node);
+    }
+    // END OMP
     this._packNodes()
       ._notify();
     return node;
@@ -620,7 +629,11 @@ export class GridStackEngine {
     // check if we will need to fix collision at our new location
     let collides = this.collideAll(node, area, o.skip);
     let needToMove = true;
-    if (collides.length) {
+    // START OMP
+    /** don't fix any collision for enabled (+with collision) `stack` */
+    // if (collides.length) {
+    if (collides.length && !node._stack) {
+    // END OMP
       // now check to make sure we actually collided over 50% surface area while dragging
       let collide = node._moving && !o.nested ? this.collideCoverage(node, o, collides) : collides[0];
       if (collide) {
@@ -633,7 +646,10 @@ export class GridStackEngine {
     // now move (to the original ask vs the collision version which might differ) and repack things
     if (needToMove) {
       node._dirty = true;
-      Utils.copyPos(node, nn);
+      // START OMP
+      // Utils.copyPos(node, nn);
+      Utils.copyPos(node, node._stack || nn);
+      // END OMP
     }
     if (o.pack) {
       this._packNodes()

@@ -191,6 +191,12 @@ export interface GridStackOptions {
   _isNested?: GridStackNode;
   /** @internal unique class name for our generated CSS style sheet */
   _styleSheetClass?: string;
+
+
+  // START OMP
+  /** if `true` stacking of items is allowed */
+  stack?: boolean;
+  // END OMP
 }
 
 /** options used during GridStackEngine.moveNode() */
@@ -352,4 +358,9 @@ export interface GridStackNode extends GridStackWidget {
   _removeDOM?: boolean;
   /** @internal */
   _initDD?: boolean;
+
+  // START OMP
+  /** contains stacked cell(s) on item dropped */
+  _stack?: GridStackNode;
+  // END OMP
 }

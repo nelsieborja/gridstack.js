@@ -287,6 +287,10 @@ export class DDDraggable extends DDBaseImplement implements HTMLElementExtendOpt
     let img = document.createElement('div');
     img.style.width = '1px';
     img.style.height = '1px';
+    // START OMP
+    /** Avoid appearing scrollbar for container with 100% height */
+    img.style.position = 'fixed';
+    // END OMP
     document.body.appendChild(img);
     e.dataTransfer.setDragImage(img, 0, 0);
     setTimeout(() => document.body.removeChild(img)); // nuke once drag had a chance to grab this 'image'

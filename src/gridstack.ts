@@ -81,7 +81,11 @@ const GridDefaults: GridStackOptions = {
   marginUnit: 'px',
   cellHeightUnit: 'px',
   disableOneColumnMode: false,
-  oneColumnModeDomSort: false
+  oneColumnModeDomSort: false,
+
+  // START OMP
+  stack: false
+  // END OMP
 };
 
 /**
