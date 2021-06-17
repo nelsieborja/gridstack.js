@@ -473,11 +473,14 @@ export class GridStackEngine {
     triggerAddEvent && this.addedNodes.push(node);
 
     // START OMP
-    /** don't fix any collision for enabled (+with collision) `stack` */
+    /** 
+     * don't fix any collision for enabled (+with collision) `stack`
+     * this is when the initial dragover of an external source is triggered
+     * */
     // this._fixCollisions(node);
     if (node._stack) {
       node._dirty = true;
-      Utils.copyPos(node, node._stack);
+      Utils.copyPos(node, node._stack); // force align placeholder rec position with the collided node
     } else {
       this._fixCollisions(node);
     }
@@ -630,7 +633,10 @@ export class GridStackEngine {
     let collides = this.collideAll(node, area, o.skip);
     let needToMove = true;
     // START OMP
-    /** don't fix any collision for enabled (+with collision) `stack` */
+    /** 
+     * don't fix any collision for enabled (+with collision) `stack`
+     * this is while dragging an external source
+     * */
     // if (collides.length) {
     if (collides.length && !node._stack) {
     // END OMP
@@ -648,7 +654,7 @@ export class GridStackEngine {
       node._dirty = true;
       // START OMP
       // Utils.copyPos(node, nn);
-      Utils.copyPos(node, node._stack || nn);
+      Utils.copyPos(node, node._stack || nn); ; // force align placeholder rec position with the collided node
       // END OMP
     }
     if (o.pack) {

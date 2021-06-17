@@ -127,6 +127,14 @@ export class DDDraggable extends DDBaseImplement implements HTMLElementExtendOpt
     const ev = DDUtils.initEvent<DragEvent>(event, { target: this.el, type: 'dragstart' });
     if (this.helper !== this.el) {
       this._setupDragFollowNodeNotifyStart(ev);
+      // START OMP
+      /**
+       * don't wait for `dragover` event, immediately set external helper initial position to:
+       * - set the correct initial position for both the helper and placeholder
+       * - skip unnecessary looping in `_packNodes()`
+       */
+      this._dragFollow(event);
+      // END OMP
     } else {
       this.dragFollowTimer = window.setTimeout(() => {
         delete this.dragFollowTimer;
@@ -301,7 +309,6 @@ export class DDDraggable extends DDBaseImplement implements HTMLElementExtendOpt
 
   /** @internal */
   private _getDragOffset(event: DragEvent, el: HTMLElement, parent: HTMLElement): DragOffset {
-
     // in case ancestor has transform/perspective css properties that change the viewpoint
     let xformOffsetX = 0;
     let xformOffsetY = 0;

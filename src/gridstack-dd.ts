@@ -487,10 +487,11 @@ GridStack.prototype._onStartMoving = function(this: GridStack, el: GridItemHTMLE
     // TEST console.log('engine.addNode x=' + node.x);
     // START OMP
     /**
-   * Utils.isIntercepted() gives `isNan` output if `p[w|h]` values are not set due to undefined `node._orig`
-   * It also makes sure to reset placeholder height & width 
-   */   
+     * Utils.isIntercepted() gives `isNan` output if `p[w|h]` values are not set due to undefined `node._orig`
+     * it also makes sure to reset placeholder height & width 
+     * */
     node._orig = Utils.copyPos({}, node);
+    // store the initial collision for the first time
     node._stack =
       this.opts.stack && node._isExternal
         ? this.engine.collide(node, node._orig)
@@ -576,8 +577,9 @@ GridStack.prototype._dragOrResize = function(this: GridStack, el: GridItemHTMLEl
     let prev = this._extraDragRow;
     // START OMP
     /**
-     * for now, storing only 1 collision
-     */
+     * store collision while dragging an external source
+     * keeping only 1 collision for now
+     * */
     // if (this.engine.collide(node, p)) {
     const collidedNode = this.engine.collide(node, p);
     if (this.opts.stack && node._isExternal) {
